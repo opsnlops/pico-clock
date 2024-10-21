@@ -1,0 +1,4 @@
+.idea/
+cmake-*/
+build/
+src/wifi_creds.h
