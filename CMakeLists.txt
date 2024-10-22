@@ -68,7 +68,9 @@ set(COMMON_INCLUDES
 
 
 add_executable(pico-clock
+        src/application-config.h
         src/main.c
+        src/freertos_hooks.c
         src/lwipopts.h
         src/wifi.h
         src/wifi.c
@@ -76,12 +78,19 @@ add_executable(pico-clock
         src/wifi_creds.h
         src/sntp.c
         src/sntp.h
+        src/time_utils.c
+        src/time_utils.h
+
         FreeRTOSConfig.h
-        src/freertos_hooks.c
+
         src/logging/logging.c
         src/logging/logging.h
         src/logging/logging_api.h
-        src/application-config.h
+
+        src/utz/utz.c
+        src/utz/utz.h
+        src/utz/zones.c
+        src/utz/zones.h
 )
 
 

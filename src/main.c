@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#include <sys/_tz_structs.h>
-
 #include <FreeRTOS.h>
 #include <queue.h>
 #include <task.h>
@@ -14,9 +12,12 @@
 #include "hardware/rtc.h"
 #include "lwip/apps/sntp.h"
 
-#include "logging/logging.h"
+#include "utz/utz.h"
 
+
+#include "logging/logging.h"
 #include "sntp.h"
+#include "time_utils.h"
 #include "types.h"
 #include "wifi.h"
 
@@ -24,9 +25,6 @@
 volatile size_t xFreeHeapSpace;
 
 bool is_wifi_connected = false;
-
-const char ENV_TZ[] = "TZ";
-const char LOCAL_TZ[] = "PST8PDT,M3.2.0,M11.1.0"; // US Pacific Time
 
 
 TaskHandle_t wifi_connect_task_handle;
@@ -48,11 +46,11 @@ void acw_post_logging_hook(char *message, uint8_t message_length) {
 }
 
 
+
+
 int main() {
 
     stdio_init_all();
-
-
 
     logger_init();
 
@@ -129,22 +127,25 @@ portTASK_FUNCTION(sntp_setup_task, pvParameters) {
 
 void time_print_timer(TimerHandle_t xTimer) {
 
-    // Set our local timezone
-    setenv(ENV_TZ, LOCAL_TZ, 1);
-    tzset();
+    // Get our local time zone
+    uzone_t active_zone;
+    get_zone_by_name("San Francisco", &active_zone);
+
+    struct tm utc_time, local_time;
 
     if (is_wifi_connected) {
-        struct tm t;
 
         char buffer[26];
-        memset(&buffer, '\0', 26);
 
-        if (get_date_now(&t)) {
+        if (get_date_now(&utc_time)) {
 
-            //struct tm* local = localtime((const time_t *) &t);
+            // Convert this to a local time
+            local_time= utc_tm_to_local_tm(utc_time, active_zone);
 
-            strftime(buffer, 26, "%Y-%m-%d %I:%M:%S %p", &t);
-            debug("Date: %s", buffer);
+            memset(&buffer, '\0', 26);
+            strftime(buffer, 26, "%Y-%m-%d %l:%M:%S %p", &local_time);
+            debug("Time: %s", buffer);
+
         }
     }
 }
